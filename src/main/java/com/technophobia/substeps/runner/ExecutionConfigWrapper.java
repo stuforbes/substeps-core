@@ -36,10 +36,12 @@ public class ExecutionConfigWrapper extends ExecutionConfigDecorator {
 
     private static final long serialVersionUID = -6096151962497826502L;
 
-    public ExecutionConfigWrapper(SubstepsExecutionConfig executionConfig) {
+
+    public ExecutionConfigWrapper(final SubstepsExecutionConfig executionConfig) {
 
         super(executionConfig);
     }
+
 
     public void initProperties() {
 
@@ -64,6 +66,7 @@ public class ExecutionConfigWrapper extends ExecutionConfigDecorator {
         System.out.println(printParameters());
     }
 
+
     private List<Class<?>> getClassesFromConfig(final String[] config) {
         List<Class<?>> stepImplementationClassList = null;
         for (final String className : config) {
@@ -82,6 +85,7 @@ public class ExecutionConfigWrapper extends ExecutionConfigDecorator {
         return stepImplementationClassList;
     }
 
+
     private String printParameters() {
         return "ExecutionConfig [description=" + getDescription() + ", tags=" + getTags() + ", nonFatalTags="
                 + getNonFatalTags() + ", featureFile=" + getFeatureFile() + ", subStepsFileName="
@@ -93,37 +97,42 @@ public class ExecutionConfigWrapper extends ExecutionConfigDecorator {
                 + Arrays.toString(getInitialisationClasses()) + "]";
     }
 
+
     public Class<?>[] determineInitialisationClasses() {
 
-        List<Class<?>> initialisationClassList = null;
-        if (getStepImplementationClasses() != null) {
+        // Don't do anything if we already have initialisation classes (from
+        // config)
+        if (getInitialisationClasses() == null || getInitialisationClasses().length == 0) {
+            List<Class<?>> initialisationClassList = null;
+            if (getStepImplementationClasses() != null) {
 
-            initialisationClassList = new ArrayList<Class<?>>();
+                initialisationClassList = new ArrayList<Class<?>>();
 
-            InitialisationClassSorter orderer = new InitialisationClassSorter();
+                final InitialisationClassSorter orderer = new InitialisationClassSorter();
 
-            for (final Class<?> c : getStepImplementationClasses()) {
+                for (final Class<?> c : getStepImplementationClasses()) {
 
-                final StepImplementations annotation = c.getAnnotation(StepImplementations.class);
+                    final StepImplementations annotation = c.getAnnotation(StepImplementations.class);
 
-                if (annotation != null) {
-                    final Class<?>[] initClasses = annotation.requiredInitialisationClasses();
+                    if (annotation != null) {
+                        final Class<?>[] initClasses = annotation.requiredInitialisationClasses();
 
-                    if (initClasses != null) {
+                        if (initClasses != null) {
 
-                        orderer.addOrderedInitialisationClasses(initClasses);
+                            orderer.addOrderedInitialisationClasses(initClasses);
+                        }
                     }
                 }
+
+                initialisationClassList = orderer.getOrderedList();
+            }
+            if (initialisationClassList == null && getInitialisationClass() != null) {
+                initialisationClassList = getClassesFromConfig(getInitialisationClass());
             }
 
-            initialisationClassList = orderer.getOrderedList();
-        }
-        if (initialisationClassList == null && getInitialisationClass() != null) {
-            initialisationClassList = getClassesFromConfig(getInitialisationClass());
-        }
-
-        if (initialisationClassList != null) {
-            setInitialisationClasses(initialisationClassList.toArray(new Class<?>[] {}));
+            if (initialisationClassList != null) {
+                setInitialisationClasses(initialisationClassList.toArray(new Class<?>[] {}));
+            }
         }
 
         return getInitialisationClasses();

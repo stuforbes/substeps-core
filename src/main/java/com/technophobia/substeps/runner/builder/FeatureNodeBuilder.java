@@ -48,7 +48,8 @@ public class FeatureNodeBuilder {
         this.scenarioNodeBuilder = new ScenarioNodeBuilder(parameters);
     }
 
-    public FeatureNode build(final FeatureFile featureFile) {
+    public FeatureNode build
+            (final FeatureFile featureFile) {
 
         if (parameters.isRunnable(featureFile)) {
 
